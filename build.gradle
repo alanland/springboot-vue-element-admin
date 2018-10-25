@@ -1,0 +1,88 @@
+buildscript {
+    ext {
+//        springBootVersion = '2.0.6.RELEASE'
+    }
+    repositories {
+        maven { url "${nexusUrl}/content/groups/public/" }
+        mavenCentral()
+        maven { url "https://repo.spring.io/snapshot" }
+        maven { url "https://repo.spring.io/milestone" }
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+    }
+}
+
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+apply plugin: "java"
+apply plugin: "war"
+apply plugin: "groovy"
+apply plugin: "idea"
+apply plugin: 'scala'
+//apply plugin: "spring-boot"
+apply plugin: "maven"
+
+ext {
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+}
+
+group = "com.ittx"
+version = "$projectVersion"
+
+repositories {
+    maven { url "${nexusUrl}/content/groups/public/" }
+    mavenCentral()
+    maven { url "https://repo.spring.io/snapshot" }
+    maven { url "https://repo.spring.io/milestone" }
+}
+
+dependencies {
+    compile "org.springframework.boot:spring-boot-starter-web",
+            "org.springframework.boot:spring-boot-starter-actuator",
+            "org.springframework.boot:spring-boot-starter-thymeleaf",
+//            "org.springframework.boot:spring-boot-starter-redis",
+//            "org.springframework.boot:spring-boot-starter-data-jpa",
+//            "org.springframework.session:spring-session:1.3.0.RELEASE",
+//            "org.thymeleaf:thymeleaf-spring4",
+//            "nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect",
+//            "org.hibernate:hibernate-validator",
+//            "org.springframework.session:spring-session",
+            "org.scala-lang:scala-library:${SCALA_FULL_VERSION}",
+            "com.fasterxml.jackson.module:jackson-module-scala_${SCALA_VERSION}",
+//        'org.apache.commons:commons-lang3:3.8.1',
+            'commons-io:commons-io:2.6',
+            "org.hsqldb:hsqldb",
+            "org.webjars:bootstrap:3.1.1"
+
+    testCompile "org.springframework.boot:spring-boot-starter-test",
+            "junit:junit"
+}
+
+apply plugin: "war"
+
+idea {
+    module {
+        excludeDirs += file('src/web/node_modules')
+        sourceDirs += file('src/web/src')
+    }
+}
+
+task npmBuildWeb(type: Exec) {
+    if (System.getProperty('os.name').toLowerCase().contains('windows')) {
+    } else {
+        commandLine 'sh', '-c', 'cd src/web && npm run build && cd ../..'
+    }
+}
+
+task copyWeb(type: Copy) {
+    from 'src/web/dist'
+    into 'build/resources/main/static'
+}
+
+copyWeb.dependsOn npmBuildWeb
+processResources.dependsOn copyWeb
+
+
